@@ -1,22 +1,32 @@
-import { Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, CalendarDays, Trash2 } from "lucide-react";
+import { Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, CalendarDays, Trash2, Users, User } from "lucide-react";
 import BotaoNovo from "./BotaoNovo";
+import BotaoEditar from "./BotaoEditar"; // Importação do botão novo
 import { db } from "../db";
 import { transactions } from "../db/schema";
 import { desc } from "drizzle-orm";
 import { mudarStatus, deletarTransacao } from "./actions";
+import Link from "next/link";
 
-export default async function Home() {
+export default async function Home({ searchParams }: any) {
+  const params = await searchParams;
+  const modoAtual = params?.modo || "casal"; 
+  const isCasal = modoAtual === "casal";
+
   const meusDados = await db.select().from(transactions).orderBy(desc(transactions.id));
 
-  const entradasFixas = meusDados
+  const dadosParaExibir = isCasal 
+    ? meusDados 
+    : meusDados.filter((t) => t.responsavel === "eu");
+
+  const entradasFixas = dadosParaExibir
     .filter((t) => t.type === "income" && t.isFixed)
     .reduce((acc, t) => acc + t.amount, 0);
 
-  const servicosPorFora = meusDados
+  const servicosPorFora = dadosParaExibir
     .filter((t) => t.type === "income" && !t.isFixed)
     .reduce((acc, t) => acc + t.amount, 0);
 
-  const despesasPendentes = meusDados
+  const despesasPendentes = dadosParaExibir
     .filter((t) => t.type === "expense" && t.status === "pending")
     .reduce((acc, t) => acc + t.amount, 0);
 
@@ -44,10 +54,17 @@ export default async function Home() {
             <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">Visão Geral</h1>
             <p className="text-zinc-500 mt-1">Acompanhe e organize suas finanças mensais.</p>
           </div>
-          <button className="bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors flex items-center gap-2 shadow-md">
+          
+          <Link 
+            href={isCasal ? "/?modo=individual" : "/?modo=casal"}
+            className="bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors flex items-center gap-2 shadow-md border border-zinc-800"
+          >
+            {isCasal ? <Users className="w-4 h-4 text-green-400" /> : <User className="w-4 h-4 text-zinc-400" />}
             <span>Modo Casal:</span>
-            <span className="text-green-400 font-bold">Ativado</span>
-          </button>
+            <span className={isCasal ? "text-green-400 font-bold" : "text-zinc-400 font-bold"}>
+              {isCasal ? "Ativado" : "Desativado"}
+            </span>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -58,7 +75,7 @@ export default async function Home() {
               </div>
               <div>
                 <p className="text-3xl font-bold text-zinc-900">{formatarMoeda(entradasFixas)}</p>
-                <p className="text-xs text-zinc-400 mt-1">Calculado do banco de dados</p>
+                <p className="text-xs text-zinc-400 mt-1">{isCasal ? "Soma da renda do casal" : "Apenas sua renda"}</p>
               </div>
            </div>
 
@@ -97,23 +114,23 @@ export default async function Home() {
             <table className="w-full text-sm text-left">
               <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500">
                 <tr>
-                  <th className="px-6 py-4 font-medium">Cliente / Título</th>
+                  <th className="px-6 py-4 font-medium">Lançamento</th>
                   <th className="px-6 py-4 font-medium">Vencimento</th>
                   <th className="px-6 py-4 font-medium">Valor</th>
-                  <th className="px-6 py-4 font-medium">Tipo</th>
+                  <th className="px-6 py-4 font-medium">Dono</th>
                   <th className="px-6 py-4 font-medium">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200">
                 
-                {meusDados.length === 0 ? (
+                {dadosParaExibir.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-zinc-500 font-medium">
-                      Nenhum lançamento encontrado. Cadastre o primeiro!
+                      Nenhum lançamento encontrado.
                     </td>
                   </tr>
                 ) : (
-                  meusDados.map((item) => (
+                  dadosParaExibir.map((item) => (
                     <tr key={item.id} className="hover:bg-zinc-50 transition-colors">
                       <td className="px-6 py-4 font-medium text-zinc-900">
                         {item.title}
@@ -130,13 +147,15 @@ export default async function Home() {
                         {formatarMoeda(item.amount)}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-zinc-600 capitalize">
-                          {item.type === 'income' ? 'Entrada' : 'Saída'}
+                        <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                          item.responsavel === 'eu' ? 'bg-indigo-50 text-indigo-700' : 'bg-purple-50 text-purple-700'
+                        }`}>
+                          {item.responsavel === 'eu' ? 'Meu' : 'Marido'}
                         </span>
                       </td>
                       <td className="px-6 py-4 flex gap-3 items-center">
                         
-                        {/* Botão de Dar Baixa (Pendente/Pago) */}
+                        {/* Botão de Dar Baixa */}
                         <form action={mudarStatus}>
                           <input type="hidden" name="id" value={item.id} />
                           <input type="hidden" name="statusAtual" value={item.status || "pending"} />
@@ -146,6 +165,9 @@ export default async function Home() {
                             {item.status === 'paid' ? 'Pago' : 'Pendente'}
                           </button>
                         </form>
+
+                        {/* Botão NOVO de Editar */}
+                        <BotaoEditar item={item} />
 
                         {/* Botão de Excluir */}
                         <form action={deletarTransacao}>
