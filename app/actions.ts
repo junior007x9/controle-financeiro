@@ -8,7 +8,10 @@ import { eq } from "drizzle-orm";
 export async function salvarTransacao(formData: FormData) {
   const title = formData.get("title") as string;
   const amountStr = formData.get("amount") as string;
-  const amount = parseFloat(amountStr.replace(",", "."));
+  
+  // NOVO: Lê o formato BR (1.200,50) e transforma em número de banco de dados (1200.50)
+  const amount = parseFloat(amountStr.replace(/\./g, "").replace(",", "."));
+  
   const type = formData.get("type") as "income" | "expense";
   const isFixed = formData.get("isFixed") === "true";
   const responsavel = formData.get("responsavel") as string;
@@ -39,12 +42,14 @@ export async function deletarTransacao(formData: FormData) {
   revalidatePath("/");
 }
 
-// NOVO: Função para salvar as edições
 export async function editarTransacao(formData: FormData) {
   const id = Number(formData.get("id"));
   const title = formData.get("title") as string;
   const amountStr = formData.get("amount") as string;
-  const amount = parseFloat(amountStr.replace(",", "."));
+  
+  // NOVO: Faz a mesma conversão inteligente aqui na edição
+  const amount = parseFloat(amountStr.replace(/\./g, "").replace(",", "."));
+  
   const type = formData.get("type") as "income" | "expense";
   const isFixed = formData.get("isFixed") === "true";
   const responsavel = formData.get("responsavel") as string;
