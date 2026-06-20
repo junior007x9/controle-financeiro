@@ -1,6 +1,7 @@
 import { Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, CalendarDays, Trash2, Users, User, TrendingUp, PieChart } from "lucide-react";
 import BotaoNovo from "./BotaoNovo";
 import BotaoEditar from "./BotaoEditar";
+import FiltroMes from "./FiltroMes"; // <--- NOVO
 import { db } from "../db";
 import { transactions } from "../db/schema";
 import { desc } from "drizzle-orm";
@@ -10,15 +11,20 @@ import Link from "next/link";
 export default async function Home({ searchParams }: any) {
   const params = await searchParams;
   const modoAtual = params?.modo || "casal"; 
+  
+  // Identifica o mês que estamos olhando (Padrão: Mês atual do servidor)
+  const mesAtual = params?.mes || new Date().toISOString().split("T")[0].substring(0, 7); 
   const isCasal = modoAtual === "casal";
 
   const meusDados = await db.select().from(transactions).orderBy(desc(transactions.id));
 
-  const dadosParaExibir = isCasal 
-    ? meusDados 
-    : meusDados.filter((t) => t.responsavel === "eu");
+  // FILTRO DUPLO: Pelo Responsável (Casal/Eu) E pelo Mês Escolhido
+  const dadosParaExibir = meusDados.filter((t) => {
+    const donoCerto = isCasal ? true : t.responsavel === "eu";
+    const mesCerto = t.date.startsWith(mesAtual);
+    return donoCerto && mesCerto;
+  });
 
-  // --- CÁLCULOS DOS CARDS SUPERIORES ---
   const entradasFixas = dadosParaExibir
     .filter((t) => t.type === "income" && t.isFixed)
     .reduce((acc, t) => acc + t.amount, 0);
@@ -31,7 +37,6 @@ export default async function Home({ searchParams }: any) {
     .filter((t) => t.type === "expense" && t.status === "pending")
     .reduce((acc, t) => acc + t.amount, 0);
 
-  // --- NOVOS CÁLCULOS: SAÚDE FINANCEIRA ---
   const totalReceitas = dadosParaExibir
     .filter((t) => t.type === "income")
     .reduce((acc, t) => acc + t.amount, 0);
@@ -42,7 +47,6 @@ export default async function Home({ searchParams }: any) {
 
   const saldoLiquido = totalReceitas - totalDespesas;
   
-  // Calcula a porcentagem do dinheiro que já foi gasto/comprometido
   const percentualGasto = totalReceitas > 0 
     ? Math.min(Math.round((totalDespesas / totalReceitas) * 100), 100) 
     : 0;
@@ -53,22 +57,20 @@ export default async function Home({ searchParams }: any) {
   return (
     <div className="min-h-screen bg-zinc-50 font-sans pb-12">
       
-      {/* HEADER PREMIUM */}
-      <header className="bg-zinc-900 border-b border-zinc-800 px-8 py-4 flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-3 text-white font-bold text-xl">
+      <header className="bg-zinc-900 border-b border-zinc-800 px-8 py-4 flex flex-col sm:flex-row items-center justify-between shadow-md gap-4">
+        <div className="flex items-center gap-3 text-white font-bold text-xl w-full sm:w-auto">
           <div className="bg-indigo-600 p-2 rounded-lg">
             <Wallet className="w-5 h-5 text-white" />
           </div>
           <span className="tracking-tight">Controle Financeiro</span>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="h-9 w-9 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-bold shadow-inner">
-            <User className="w-4 h-4" />
-          </div>
-        </div>
+        
+        {/* FILTRO DE MÊS AQUI NO TOPO */}
+        <FiltroMes />
+
       </header>
 
-      <main className="max-w-5xl mx-auto p-8 pt-10">
+      <main className="max-w-5xl mx-auto p-8 pt-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">Visão Geral</h1>
@@ -76,7 +78,7 @@ export default async function Home({ searchParams }: any) {
           </div>
           
           <Link 
-            href={isCasal ? "/?modo=individual" : "/?modo=casal"}
+            href={`/?modo=${isCasal ? 'individual' : 'casal'}&mes=${mesAtual}`}
             className="bg-white text-zinc-900 px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-zinc-50 transition-colors flex items-center gap-2 shadow-sm border border-zinc-200"
           >
             {isCasal ? <Users className="w-4 h-4 text-indigo-600" /> : <User className="w-4 h-4 text-zinc-400" />}
@@ -87,7 +89,7 @@ export default async function Home({ searchParams }: any) {
           </Link>
         </div>
 
-        {/* --- NOVA SESSÃO: BARRA DE SAÚDE FINANCEIRA --- */}
+        {/* BARRA DE SAÚDE FINANCEIRA */}
         <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm p-6 mb-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-6 opacity-5">
             <PieChart className="w-32 h-32" />
@@ -109,7 +111,6 @@ export default async function Home({ searchParams }: any) {
                </div>
             </div>
             
-            {/* Barra de Progresso */}
             <div className="w-full bg-zinc-100 rounded-full h-4 mb-3 overflow-hidden flex border border-zinc-200/50 shadow-inner">
               <div 
                 className={`h-4 rounded-full transition-all duration-1000 ease-out ${percentualGasto > 85 ? 'bg-red-500' : percentualGasto > 60 ? 'bg-yellow-400' : 'bg-green-500'}`} 
@@ -186,7 +187,7 @@ export default async function Home({ searchParams }: any) {
                 {dadosParaExibir.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-zinc-500 font-medium">
-                      Nenhum lançamento encontrado. Comece adicionando uma entrada!
+                      Nenhum lançamento neste mês. Que tal adicionar um?
                     </td>
                   </tr>
                 ) : (
