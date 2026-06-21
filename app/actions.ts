@@ -1,30 +1,36 @@
 "use server";
 
 import { db } from "../db";
-import { transactions } from "../db/schema";
+import { transactions, goals } from "../db/schema";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
+// === AÇÕES DE TRANSAÇÕES (JÁ EXISTENTES) ===
 export async function salvarTransacao(formData: FormData) {
   const title = formData.get("title") as string;
   const amountStr = formData.get("amount") as string;
-  
-  // NOVO: Lê o formato BR (1.200,50) e transforma em número de banco de dados (1200.50)
   const amount = parseFloat(amountStr.replace(/\./g, "").replace(",", "."));
-  
   const type = formData.get("type") as "income" | "expense";
   const isFixed = formData.get("isFixed") === "true";
   const responsavel = formData.get("responsavel") as string;
+  const categoria = formData.get("categoria") as string; 
   
+  const parcelasStr = formData.get("parcelas") as string;
+  const parcelas = parcelasStr ? parseInt(parcelasStr) : 1;
   const dueDateInput = formData.get("dueDateDay");
   const dueDateDay = dueDateInput ? parseInt(dueDateInput as string) : null;
-  const dataHoje = new Date().toISOString().split("T")[0];
+  const dataHoje = new Date();
 
-  await db.insert(transactions).values({
-    title, amount, type, isFixed, dueDateDay, responsavel,
-    date: dataHoje, status: "pending",
-  });
+  for (let i = 0; i < parcelas; i++) {
+    const dataLancamento = new Date(dataHoje.getFullYear(), dataHoje.getMonth() + i, dataHoje.getDate());
+    const dataFormatada = dataLancamento.toISOString().split("T")[0];
+    const tituloFinal = parcelas > 1 ? `${title} (${i + 1}/${parcelas})` : title;
 
+    await db.insert(transactions).values({
+      title: tituloFinal, amount, type, isFixed, dueDateDay, responsavel, categoria,
+      date: dataFormatada, status: "pending",
+    });
+  }
   revalidatePath("/");
 }
 
@@ -46,19 +52,63 @@ export async function editarTransacao(formData: FormData) {
   const id = Number(formData.get("id"));
   const title = formData.get("title") as string;
   const amountStr = formData.get("amount") as string;
-  
-  // NOVO: Faz a mesma conversão inteligente aqui na edição
   const amount = parseFloat(amountStr.replace(/\./g, "").replace(",", "."));
-  
   const type = formData.get("type") as "income" | "expense";
   const isFixed = formData.get("isFixed") === "true";
   const responsavel = formData.get("responsavel") as string;
   const dueDateInput = formData.get("dueDateDay");
   const dueDateDay = dueDateInput ? parseInt(dueDateInput as string) : null;
 
-  await db.update(transactions).set({
-    title, amount, type, isFixed, dueDateDay, responsavel
-  }).where(eq(transactions.id, id));
+  await db.update(transactions).set({ title, amount, type, isFixed, dueDateDay, responsavel }).where(eq(transactions.id, id));
+  revalidatePath("/");
+}
 
+export async function puxarFixosDoMesPassado(formData: FormData) {
+  const mesAtualStr = formData.get("mesAtual") as string;
+  const dataAtual = new Date(mesAtualStr + "-02T00:00:00");
+  dataAtual.setMonth(dataAtual.getMonth() - 1);
+  const mesPassadoStr = dataAtual.toISOString().substring(0, 7);
+
+  const todos = await db.select().from(transactions).where(eq(transactions.isFixed, true));
+  const fixosMesPassado = todos.filter((t) => t.date.startsWith(mesPassadoStr));
+
+  for (const item of fixosMesPassado) {
+    const dataNova = new Date(item.date);
+    dataNova.setMonth(dataNova.getMonth() + 1);
+    const dataFormatada = dataNova.toISOString().split("T")[0];
+
+    await db.insert(transactions).values({
+      title: item.title, amount: item.amount, type: item.type, isFixed: true,
+      dueDateDay: item.dueDateDay, responsavel: item.responsavel, categoria: item.categoria,
+      date: dataFormatada, status: "pending",
+    });
+  }
+  revalidatePath("/");
+}
+
+// === NOVAS AÇÕES: CAIXINHAS ===
+export async function criarMeta(formData: FormData) {
+  const title = formData.get("title") as string;
+  const amountStr = formData.get("targetAmount") as string;
+  const targetAmount = parseFloat(amountStr.replace(/\./g, "").replace(",", "."));
+  await db.insert(goals).values({ title, targetAmount, currentAmount: 0 });
+  revalidatePath("/");
+}
+
+export async function guardarDinheiro(formData: FormData) {
+  const id = Number(formData.get("id"));
+  const amountStr = formData.get("amount") as string;
+  const amount = parseFloat(amountStr.replace(/\./g, "").replace(",", "."));
+  
+  const [meta] = await db.select().from(goals).where(eq(goals.id, id));
+  if (meta) {
+    await db.update(goals).set({ currentAmount: meta.currentAmount + amount }).where(eq(goals.id, id));
+  }
+  revalidatePath("/");
+}
+
+export async function deletarMeta(formData: FormData) {
+  const id = Number(formData.get("id"));
+  await db.delete(goals).where(eq(goals.id, id));
   revalidatePath("/");
 }

@@ -24,6 +24,13 @@ export const transactions = sqliteTable("transactions", {
   isFixed: integer("is_fixed", { mode: "boolean" }).default(false),
   categoryId: integer("category_id").references(() => categories.id),
   responsavel: text("responsavel").default("eu"), 
-  // NOVA COLUNA: Categoria da despesa
   categoria: text("categoria").default("Outros"), 
+});
+
+// NOVA TABELA: Caixinhas / Metas
+export const goals = sqliteTable("goals", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  targetAmount: real("target_amount").notNull(),
+  currentAmount: real("current_amount").default(0).notNull(),
 });
