@@ -3,14 +3,12 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 export default function GraficoCategorias({ dados }: { dados: Record<string, number> }) {
-  // Transforma os nossos dados em formato de gráfico e ordena do maior pro menor
   const data = Object.entries(dados)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
   if (data.length === 0) return null;
 
-  // Paleta de cores premium para as fatias do gráfico
   const COLORS = ['#4f46e5', '#ec4899', '#06b6d4', '#f59e0b', '#10b981', '#8b5cf6', '#f43f5e'];
 
   const formatarMoeda = (valor: number) => 
@@ -33,7 +31,7 @@ export default function GraficoCategorias({ dados }: { dados: Record<string, num
             ))}
           </Pie>
           <Tooltip 
-            formatter={(value: number) => formatarMoeda(value)}
+            formatter={(value: any) => formatarMoeda(Number(value))}
             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
           />
           <Legend 
