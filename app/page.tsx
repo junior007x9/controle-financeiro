@@ -61,8 +61,8 @@ export default async function Home({ searchParams }: any) {
     if (resp === 'casa') return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 shrink-0">Casa</span>;
   }
 
-  // --- NOVA ETIQUETA DOS BANCOS ---
-  const renderTagBanco = (banco: string) => {
+  // CORREÇÃO: Agora o TypeScript sabe que o banco pode ser vazio (null) nas contas antigas
+  const renderTagBanco = (banco: string | null) => {
     if (!banco || banco === 'Nenhum') return null;
     let cor = 'bg-zinc-100 text-zinc-600';
     if (banco === 'Nubank') cor = 'bg-purple-100 text-purple-700 border border-purple-200';
