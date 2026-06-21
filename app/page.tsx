@@ -1,85 +1,88 @@
-import { Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, CalendarDays, Trash2, Users, User, TrendingUp, PieChart, Home as HomeIcon } from "lucide-react";
+import { Wallet, ArrowUpCircle, ArrowDownCircle, CreditCard, CalendarDays, Trash2, Users, User, TrendingUp, PieChart, Home as HomeIcon, Copy } from "lucide-react";
 import BotaoNovo from "./BotaoNovo";
 import BotaoEditar from "./BotaoEditar";
 import FiltroMes from "./FiltroMes";
+import BarraPesquisa from "./BarraPesquisa"; // <-- A NOSSA NOVA LUPA
 import { db } from "../db";
 import { transactions } from "../db/schema";
 import { desc } from "drizzle-orm";
-import { mudarStatus, deletarTransacao } from "./actions";
+import { mudarStatus, deletarTransacao, puxarFixosDoMesPassado } from "./actions";
 import Link from "next/link";
 
 export default async function Home({ searchParams }: any) {
   const params = await searchParams;
   const modoAtual = params?.modo || "casal"; 
   const mesAtual = params?.mes || new Date().toISOString().split("T")[0].substring(0, 7); 
+  const busca = params?.busca?.toLowerCase() || ""; // <-- LÓGICA DA PESQUISA
 
   // Lógica das 4 Fases
-  let proximoModo = "esposa";
-  let textoModo = "CASAL";
-  let corTexto = "text-indigo-600";
-  let iconeModo = <Users className="w-4 h-4 text-indigo-600" />;
-
-  if (modoAtual === "esposa") {
-    proximoModo = "marido";
-    textoModo = "ESPOSA";
-    corTexto = "text-pink-600";
-    iconeModo = <User className="w-4 h-4 text-pink-600" />;
-  } else if (modoAtual === "marido") {
-    proximoModo = "casa";
-    textoModo = "MARIDO";
-    corTexto = "text-blue-600";
-    iconeModo = <User className="w-4 h-4 text-blue-600" />;
-  } else if (modoAtual === "casa") {
-    proximoModo = "casal";
-    textoModo = "CASA / DIVIDIDO";
-    corTexto = "text-amber-600";
-    iconeModo = <HomeIcon className="w-4 h-4 text-amber-600" />;
-  }
+  let proximoModo = "esposa"; let textoModo = "CASAL"; let corTexto = "text-indigo-600"; let iconeModo = <Users className="w-4 h-4 text-indigo-600" />;
+  if (modoAtual === "esposa") { proximoModo = "marido"; textoModo = "ESPOSA"; corTexto = "text-pink-600"; iconeModo = <User className="w-4 h-4 text-pink-600" />; }
+  else if (modoAtual === "marido") { proximoModo = "casa"; textoModo = "MARIDO"; corTexto = "text-blue-600"; iconeModo = <User className="w-4 h-4 text-blue-600" />; }
+  else if (modoAtual === "casa") { proximoModo = "casal"; textoModo = "CASA / DIVIDIDO"; corTexto = "text-amber-600"; iconeModo = <HomeIcon className="w-4 h-4 text-amber-600" />; }
 
   const meusDados = await db.select().from(transactions).orderBy(desc(transactions.id));
 
-  // Filtro Inteligente
+  // Filtro Inteligente (Agora com a Pesquisa embutida)
   const dadosParaExibir = meusDados.filter((t) => {
     const mesCerto = t.date.startsWith(mesAtual);
     let donoCerto = true;
     if (modoAtual === "esposa") donoCerto = t.responsavel === "eu";
     if (modoAtual === "marido") donoCerto = t.responsavel === "marido";
     if (modoAtual === "casa") donoCerto = t.responsavel === "casa" || t.responsavel === "ambos";
-    return mesCerto && donoCerto;
+    
+    // Filtro da Barra de Pesquisa
+    const buscaCerta = busca === "" || t.title.toLowerCase().includes(busca);
+
+    return mesCerto && donoCerto && buscaCerta;
   });
 
   // SEPARANDO AS TABELAS
   const listaEntradas = dadosParaExibir.filter(t => t.type === 'income');
   const listaDespesas = dadosParaExibir.filter(t => t.type === 'expense');
 
-  const entradasFixas = listaEntradas.filter((t) => t.isFixed).reduce((acc, t) => acc + t.amount, 0);
-  const servicosPorFora = listaEntradas.filter((t) => !t.isFixed).reduce((acc, t) => acc + t.amount, 0);
-  const despesasPendentes = listaDespesas.filter((t) => t.status === "pending").reduce((acc, t) => acc + t.amount, 0);
   const totalReceitas = listaEntradas.reduce((acc, t) => acc + t.amount, 0);
   const totalDespesas = listaDespesas.reduce((acc, t) => acc + t.amount, 0);
   const saldoLiquido = totalReceitas - totalDespesas;
   
   const percentualGasto = totalReceitas > 0 ? Math.min(Math.round((totalDespesas / totalReceitas) * 100), 100) : 0;
+  
+  // GRÁFICO DE CATEGORIAS
+  const gastosPorCategoria = listaDespesas.reduce((acc, t) => {
+    const cat = t.categoria || 'Outros';
+    acc[cat] = (acc[cat] || 0) + t.amount;
+    return acc;
+  }, {} as Record<string, number>);
+
   const formatarMoeda = (valor: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
 
   // Função para desenhar as tags coloridas de quem é a conta
   const renderTagDono = (resp: string) => {
-    if (resp === 'eu') return <span className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-pink-50 text-pink-700 border border-pink-100">Esposa</span>;
-    if (resp === 'marido') return <span className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">Marido</span>;
-    if (resp === 'ambos') return <span className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-100">Dividido</span>;
-    if (resp === 'casa') return <span className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100">Casa</span>;
+    if (resp === 'eu') return <span className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-pink-50 text-pink-700 border border-pink-100 shrink-0">Esposa</span>;
+    if (resp === 'marido') return <span className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100 shrink-0">Marido</span>;
+    if (resp === 'ambos') return <span className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-100 shrink-0">Dividido</span>;
+    if (resp === 'casa') return <span className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100 shrink-0">Casa</span>;
   }
 
   return (
     <div className="min-h-screen bg-zinc-50 font-sans pb-12">
-      <header className="bg-zinc-900 border-b border-zinc-800 px-4 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between shadow-md gap-4">
-        <div className="flex items-center gap-3 text-white font-bold text-xl w-full sm:w-auto justify-center sm:justify-start">
+      <header className="bg-zinc-900 border-b border-zinc-800 px-4 sm:px-8 py-4 flex flex-col xl:flex-row items-center justify-between shadow-md gap-4">
+        <div className="flex items-center gap-3 text-white font-bold text-xl w-full xl:w-auto justify-center xl:justify-start shrink-0">
           <div className="bg-indigo-600 p-2 rounded-lg">
             <Wallet className="w-5 h-5 text-white" />
           </div>
           <span className="tracking-tight">Controle Financeiro</span>
         </div>
-        <div className="flex items-center gap-3">
+        
+        {/* BARRA DE AÇÕES COM A NOVA PESQUISA */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 w-full xl:w-auto justify-start xl:justify-end scrollbar-hide">
+           <BarraPesquisa /> {/* <-- A BARRA ESTÁ AQUI */}
+           <form action={puxarFixosDoMesPassado}>
+             <input type="hidden" name="mesAtual" value={mesAtual} />
+             <button type="submit" className="bg-amber-100 text-amber-700 px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-amber-200 transition-colors flex items-center gap-2 shadow-sm border border-amber-200 shrink-0" title="Copiar fixos do mês passado">
+               <Copy className="w-4 h-4" /> <span className="hidden xl:inline">Puxar Fixos</span>
+             </button>
+           </form>
            <BotaoNovo />
            <FiltroMes />
         </div>
@@ -138,6 +141,21 @@ export default async function Home({ searchParams }: any) {
           </div>
         </div>
 
+        {/* BLOCOS DE CATEGORIAS */}
+        {Object.keys(gastosPorCategoria).length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-3">Para onde o dinheiro está indo?</h3>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {Object.entries(gastosPorCategoria).sort((a, b) => b[1] - a[1]).map(([cat, val]) => (
+                <div key={cat} className="min-w-[140px] bg-white border border-zinc-200 p-4 rounded-xl shadow-sm shrink-0">
+                  <p className="text-xs text-zinc-500 mb-1 font-semibold">{cat}</p>
+                  <p className="font-bold text-red-500 text-lg">{formatarMoeda(val)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ESPAÇAMENTO ENTRE AS TABELAS SEPARADAS */}
         <div className="space-y-8">
             
@@ -160,7 +178,7 @@ export default async function Home({ searchParams }: any) {
                   </thead>
                   <tbody className="divide-y divide-zinc-200">
                     {listaEntradas.length === 0 ? (
-                      <tr><td colSpan={5} className="px-6 py-8 text-center text-zinc-500 font-medium">Nenhuma entrada registrada.</td></tr>
+                      <tr><td colSpan={5} className="px-6 py-8 text-center text-zinc-500 font-medium">Nenhuma entrada encontrada.</td></tr>
                     ) : (
                       listaEntradas.map((item) => (
                         <tr key={item.id} className="hover:bg-zinc-50 transition-colors">
@@ -217,7 +235,7 @@ export default async function Home({ searchParams }: any) {
                   </thead>
                   <tbody className="divide-y divide-zinc-200">
                     {listaDespesas.length === 0 ? (
-                      <tr><td colSpan={5} className="px-6 py-8 text-center text-zinc-500 font-medium">Nenhuma despesa registrada. Ufa!</td></tr>
+                      <tr><td colSpan={5} className="px-6 py-8 text-center text-zinc-500 font-medium">Nenhuma despesa encontrada.</td></tr>
                     ) : (
                       listaDespesas.map((item) => (
                         <tr key={item.id} className="hover:bg-zinc-50 transition-colors">
