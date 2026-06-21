@@ -14,9 +14,8 @@ export default function BotaoNovo() {
     setTipoForm("income");
   }
 
-  // --- MÁSCARA DE MOEDA (Formata enquanto digita) ---
   const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ""); // Remove tudo que não for número
+    let value = e.target.value.replace(/\D/g, "");
     if (!value) {
       e.target.value = "";
       return;
@@ -31,7 +30,7 @@ export default function BotaoNovo() {
   return (
     <>
       <button onClick={() => setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
-        <Plus className="w-4 h-4" /> Nova Entrada / Saída
+        <Plus className="w-4 h-4" /> Novo Lançamento
       </button>
 
       {isModalOpen && (
@@ -39,7 +38,7 @@ export default function BotaoNovo() {
           <div className="bg-zinc-50 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-zinc-200 flex items-center justify-between bg-white">
               <h2 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
-                <Plus className="w-5 h-5 text-indigo-600" /> Novo Lançamento
+                <Plus className="w-5 h-5 text-indigo-600" /> Cadastrar
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 p-2 rounded-full transition-colors">
                 <X className="w-5 h-5" />
@@ -50,24 +49,26 @@ export default function BotaoNovo() {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">Tipo do Lançamento</label>
+                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">O que é isso?</label>
                   <select name="type" value={tipoForm} onChange={(e) => setTipoForm(e.target.value)} className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-zinc-900 shadow-sm font-medium">
-                    <option value="income">Entrada (+)</option>
-                    <option value="expense">Despesa (-)</option>
+                    <option value="income">Entrada (Dinheiro)</option>
+                    <option value="expense">Despesa (Conta)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">A quem pertence?</label>
+                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">De quem é?</label>
                   <select name="responsavel" className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-zinc-900 shadow-sm">
                     <option value="eu">Esposa (Meu)</option>
                     <option value="marido">Marido</option>
+                    <option value="ambos">Nós Dois (Dividido)</option>
+                    <option value="casa">Despesas da Casa</option>
                   </select>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-zinc-700 mb-1.5">
-                  {tipoForm === 'income' ? 'Título / Origem (Ex: Ótica Suelen, YAMAHA)' : 'Qual é a despesa? (Ex: Energia, Cartão)'}
+                  {tipoForm === 'income' ? 'Título / Origem (Ex: Salário, YAMAHA)' : 'Qual é a despesa? (Ex: Energia, Internet)'}
                 </label>
                 <input type="text" name="title" required placeholder="Digite aqui..." className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm bg-white text-zinc-900 placeholder-zinc-400" />
               </div>
@@ -75,15 +76,7 @@ export default function BotaoNovo() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-zinc-700 mb-1.5">Valor (R$)</label>
-                  {/* CAMPO DE VALOR ATUALIZADO */}
-                  <input 
-                    type="text" 
-                    name="amount" 
-                    required 
-                    placeholder="0,00" 
-                    onChange={handleCurrencyChange}
-                    className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm bg-white text-zinc-900 placeholder-zinc-400 font-medium" 
-                  />
+                  <input type="text" name="amount" required placeholder="0,00" onChange={handleCurrencyChange} className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm bg-white text-zinc-900 placeholder-zinc-400 font-medium" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-zinc-700 mb-1.5">Dia (Vencimento)</label>
