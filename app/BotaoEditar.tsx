@@ -84,13 +84,14 @@ export default function BotaoEditar({ item }: { item: any }) {
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 mb-1">Categoria</label>
                   <select name="categoria" defaultValue={item.categoria || "Outros"} className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none bg-white shadow-sm text-sm">
+                    <option value="Salário">💰 Salário</option>
                     <option value="Moradia">🏠 Moradia</option>
                     <option value="Alimentação">🍔 Alimentação</option>
                     <option value="Transporte">🚗 Transporte</option>
                     <option value="Lazer">🍿 Lazer</option>
                     <option value="Saúde">💊 Saúde</option>
                     <option value="Educação">📚 Educação</option>
-                    <option value="Serviços">💼 Serviços/Renda</option>
+                    <option value="Serviços">💼 Serviços/Renda Extra</option>
                     <option value="Outros">📦 Outros</option>
                   </select>
                 </div>
