@@ -5,7 +5,6 @@ import { transactions, goals } from "../db/schema";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
-// === AÇÕES DE TRANSAÇÕES (JÁ EXISTENTES) ===
 export async function salvarTransacao(formData: FormData) {
   const title = formData.get("title") as string;
   const amountStr = formData.get("amount") as string;
@@ -14,6 +13,7 @@ export async function salvarTransacao(formData: FormData) {
   const isFixed = formData.get("isFixed") === "true";
   const responsavel = formData.get("responsavel") as string;
   const categoria = formData.get("categoria") as string; 
+  const banco = formData.get("banco") as string || "Nenhum"; // LÊ O CARTÃO
   
   const parcelasStr = formData.get("parcelas") as string;
   const parcelas = parcelasStr ? parseInt(parcelasStr) : 1;
@@ -21,13 +21,14 @@ export async function salvarTransacao(formData: FormData) {
   const dueDateDay = dueDateInput ? parseInt(dueDateInput as string) : null;
   const dataHoje = new Date();
 
+  // LOOP DE PARCELAMENTO AUTOMÁTICO
   for (let i = 0; i < parcelas; i++) {
     const dataLancamento = new Date(dataHoje.getFullYear(), dataHoje.getMonth() + i, dataHoje.getDate());
     const dataFormatada = dataLancamento.toISOString().split("T")[0];
     const tituloFinal = parcelas > 1 ? `${title} (${i + 1}/${parcelas})` : title;
 
     await db.insert(transactions).values({
-      title: tituloFinal, amount, type, isFixed, dueDateDay, responsavel, categoria,
+      title: tituloFinal, amount, type, isFixed, dueDateDay, responsavel, categoria, banco,
       date: dataFormatada, status: "pending",
     });
   }
@@ -56,10 +57,11 @@ export async function editarTransacao(formData: FormData) {
   const type = formData.get("type") as "income" | "expense";
   const isFixed = formData.get("isFixed") === "true";
   const responsavel = formData.get("responsavel") as string;
+  const banco = formData.get("banco") as string || "Nenhum";
   const dueDateInput = formData.get("dueDateDay");
   const dueDateDay = dueDateInput ? parseInt(dueDateInput as string) : null;
 
-  await db.update(transactions).set({ title, amount, type, isFixed, dueDateDay, responsavel }).where(eq(transactions.id, id));
+  await db.update(transactions).set({ title, amount, type, isFixed, dueDateDay, responsavel, banco }).where(eq(transactions.id, id));
   revalidatePath("/");
 }
 
@@ -79,14 +81,14 @@ export async function puxarFixosDoMesPassado(formData: FormData) {
 
     await db.insert(transactions).values({
       title: item.title, amount: item.amount, type: item.type, isFixed: true,
-      dueDateDay: item.dueDateDay, responsavel: item.responsavel, categoria: item.categoria,
+      dueDateDay: item.dueDateDay, responsavel: item.responsavel, categoria: item.categoria, banco: item.banco,
       date: dataFormatada, status: "pending",
     });
   }
   revalidatePath("/");
 }
 
-// === NOVAS AÇÕES: CAIXINHAS ===
+// CAIXINHAS
 export async function criarMeta(formData: FormData) {
   const title = formData.get("title") as string;
   const amountStr = formData.get("targetAmount") as string;
@@ -94,19 +96,14 @@ export async function criarMeta(formData: FormData) {
   await db.insert(goals).values({ title, targetAmount, currentAmount: 0 });
   revalidatePath("/");
 }
-
 export async function guardarDinheiro(formData: FormData) {
   const id = Number(formData.get("id"));
   const amountStr = formData.get("amount") as string;
   const amount = parseFloat(amountStr.replace(/\./g, "").replace(",", "."));
-  
   const [meta] = await db.select().from(goals).where(eq(goals.id, id));
-  if (meta) {
-    await db.update(goals).set({ currentAmount: meta.currentAmount + amount }).where(eq(goals.id, id));
-  }
+  if (meta) await db.update(goals).set({ currentAmount: meta.currentAmount + amount }).where(eq(goals.id, id));
   revalidatePath("/");
 }
-
 export async function deletarMeta(formData: FormData) {
   const id = Number(formData.get("id"));
   await db.delete(goals).where(eq(goals.id, id));

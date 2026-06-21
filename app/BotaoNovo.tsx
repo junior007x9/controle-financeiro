@@ -15,97 +15,109 @@ export default function BotaoNovo() {
   }
 
   const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "");
-    if (!value) {
-      e.target.value = "";
-      return;
-    }
-    const numberValue = Number(value) / 100;
-    e.target.value = numberValue.toLocaleString("pt-BR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    const value = e.target.value.replace(/\D/g, "");
+    if (!value) e.target.value = "";
+    else e.target.value = (Number(value) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
   };
 
   return (
     <>
-      <button onClick={() => setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
-        <Plus className="w-4 h-4" /> Novo Lançamento
+      <button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20 shrink-0">
+        <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Novo</span>
       </button>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 text-left">
-          <div className="bg-zinc-50 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-zinc-200 flex items-center justify-between bg-white">
-              <h2 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
-                <Plus className="w-5 h-5 text-indigo-600" /> Cadastrar
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 p-2 rounded-full transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+          <div className="bg-zinc-50 rounded-3xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="p-5 border-b border-zinc-200 flex items-center justify-between bg-white sticky top-0 z-10">
+              <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">Novo Lançamento</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 bg-zinc-100 p-1.5 rounded-full"><X className="w-5 h-5" /></button>
             </div>
             
-            <form action={handleAction} className="p-6 space-y-5 bg-zinc-50">
-              
-              <div className="grid grid-cols-2 gap-4">
+            <form action={handleAction} className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">O que é isso?</label>
-                  <select name="type" value={tipoForm} onChange={(e) => setTipoForm(e.target.value)} className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-zinc-900 shadow-sm font-medium">
-                    <option value="income">Entrada (Dinheiro)</option>
-                    <option value="expense">Despesa (Conta)</option>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Tipo</label>
+                  <select name="type" value={tipoForm} onChange={(e) => setTipoForm(e.target.value)} className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm text-sm">
+                    <option value="income">Entrada (+)</option>
+                    <option value="expense">Despesa (-)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">De quem é?</label>
-                  <select name="responsavel" className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-zinc-900 shadow-sm">
-                    <option value="eu">Esposa (Meu)</option>
-                    <option value="marido">Marido</option>
-                    <option value="ambos">Nós Dois (Dividido)</option>
-                    <option value="casa">Despesas da Casa</option>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Responsável</label>
+                  <select name="responsavel" className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm text-sm">
+                    <option value="eu">Esposa</option><option value="marido">Marido</option><option value="ambos">Dividido</option><option value="casa">Casa</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-zinc-700 mb-1.5">
-                  {tipoForm === 'income' ? 'Título / Origem (Ex: Salário, YAMAHA)' : 'Qual é a despesa? (Ex: Energia, Internet)'}
-                </label>
-                <input type="text" name="title" required placeholder="Digite aqui..." className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm bg-white text-zinc-900 placeholder-zinc-400" />
+                <label className="block text-xs font-bold text-zinc-700 mb-1">Título</label>
+                <input type="text" name="title" required placeholder="Ex: Geladeira Nova" className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none shadow-sm text-sm" />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">Valor (R$)</label>
-                  <input type="text" name="amount" required placeholder="0,00" onChange={handleCurrencyChange} className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm bg-white text-zinc-900 placeholder-zinc-400 font-medium" />
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Valor da Parcela (R$)</label>
+                  <input type="text" name="amount" required placeholder="0,00" onChange={handleCurrencyChange} className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none shadow-sm font-bold text-sm text-indigo-600" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">Dia (Vencimento)</label>
-                  <input type="number" name="dueDateDay" min="1" max="31" placeholder="Ex: 12" className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm bg-white text-zinc-900 placeholder-zinc-400" />
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Dia Vencimento</label>
+                  <input type="number" name="dueDateDay" min="1" max="31" placeholder="Ex: 10" className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none shadow-sm text-sm" />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-zinc-700 mb-1.5">
-                  {tipoForm === 'income' ? 'Frequência da Entrada' : 'Tipo de Despesa'}
-                </label>
-                <select name="isFixed" className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-zinc-900 shadow-sm">
-                  {tipoForm === 'income' ? (
-                    <>
-                      <option value="true">Renda Fixa Mensal</option>
-                      <option value="false">Serviço Por Fora / Avulso</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="true">Despesa Fixa (Todo mês)</option>
-                      <option value="false">Gasto Variável / Avulso</option>
-                    </>
-                  )}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Categoria</label>
+                  <select name="categoria" className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none bg-white shadow-sm text-sm">
+                    <option value="Moradia">🏠 Moradia</option>
+                    <option value="Alimentação">🍔 Alimentação</option>
+                    <option value="Transporte">🚗 Transporte</option>
+                    <option value="Lazer">🍿 Lazer</option>
+                    <option value="Saúde">💊 Saúde</option>
+                    <option value="Educação">📚 Educação</option>
+                    <option value="Outros">📦 Outros</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Recorrência</label>
+                  <select name="isFixed" className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none bg-white shadow-sm text-sm">
+                    <option value="false">Compra Avulsa</option>
+                    <option value="true">Conta Fixa (Todo mês)</option>
+                  </select>
+                </div>
               </div>
 
-              <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-colors mt-4 shadow-md hover:shadow-lg">
-                Salvar Lançamento
-              </button>
+              {/* OPÇÕES EXCLUSIVAS DE CARTÃO DE CRÉDITO */}
+              {tipoForm === 'expense' && (
+                <div className="bg-indigo-50/50 border border-indigo-100 p-3 rounded-xl space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-indigo-900 mb-1">Usou qual Cartão?</label>
+                    <select name="banco" className="w-full border border-indigo-200 rounded-lg px-3 py-2 outline-none bg-white shadow-sm text-sm font-medium text-indigo-800">
+                      <option value="Nenhum">Não (Pix / Boleto)</option>
+                      <option value="Nubank">🟪 Cartão Nubank</option>
+                      <option value="Inter">🟧 Cartão Inter</option>
+                      <option value="Mercado Pago">🟦 Cartão Mercado Pago</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-indigo-900 mb-1">Dividiu em quantas vezes?</label>
+                    <select name="parcelas" className="w-full border border-indigo-200 rounded-lg px-3 py-2 outline-none bg-white shadow-sm text-sm">
+                      <option value="1">À vista (1x)</option>
+                      <option value="2">2 vezes (2x)</option>
+                      <option value="3">3 vezes (3x)</option>
+                      <option value="4">4 vezes (4x)</option>
+                      <option value="5">5 vezes (5x)</option>
+                      <option value="6">6 vezes (6x)</option>
+                      <option value="10">10 vezes (10x)</option>
+                      <option value="12">12 vezes (12x)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-md">Salvar</button>
             </form>
           </div>
         </div>

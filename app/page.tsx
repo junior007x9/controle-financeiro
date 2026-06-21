@@ -5,7 +5,7 @@ import FiltroMes from "./FiltroMes";
 import BarraPesquisa from "./BarraPesquisa"; 
 import BotaoNovaMeta from "./BotaoNovaMeta"; 
 import BotaoGuardarDinheiro from "./BotaoGuardarDinheiro";
-import GraficoCategorias from "./GraficoCategorias"; // <-- IMPORTAMOS O GRÁFICO AQUI
+import GraficoCategorias from "./GraficoCategorias"; 
 import { db } from "../db";
 import { transactions, goals } from "../db/schema"; 
 import { desc } from "drizzle-orm";
@@ -19,10 +19,10 @@ export default async function Home({ searchParams }: any) {
   const busca = params?.busca?.toLowerCase() || ""; 
 
   const modosMenu = [
-    { id: 'casal', nome: 'Geral (Casal)', icone: Users, cor: 'text-indigo-600', bgAtivo: 'bg-indigo-600 text-white shadow-md', border: 'border-indigo-200' },
-    { id: 'esposa', nome: 'Esposa', icone: User, cor: 'text-pink-600', bgAtivo: 'bg-pink-600 text-white shadow-md', border: 'border-pink-200' },
-    { id: 'marido', nome: 'Marido', icone: User, cor: 'text-blue-600', bgAtivo: 'bg-blue-600 text-white shadow-md', border: 'border-blue-200' },
-    { id: 'casa', nome: 'Despesas Casa', icone: HomeIcon, cor: 'text-amber-600', bgAtivo: 'bg-amber-500 text-white shadow-md', border: 'border-amber-200' },
+    { id: 'casal', nome: 'Geral (Casal)', icone: Users, cor: 'text-indigo-600', bgAtivo: 'bg-indigo-600 text-white shadow-md' },
+    { id: 'esposa', nome: 'Esposa', icone: User, cor: 'text-pink-600', bgAtivo: 'bg-pink-600 text-white shadow-md' },
+    { id: 'marido', nome: 'Marido', icone: User, cor: 'text-blue-600', bgAtivo: 'bg-blue-600 text-white shadow-md' },
+    { id: 'casa', nome: 'Despesas Casa', icone: HomeIcon, cor: 'text-amber-600', bgAtivo: 'bg-amber-500 text-white shadow-md' },
   ];
 
   const meusDados = await db.select().from(transactions).orderBy(desc(transactions.id));
@@ -55,19 +55,27 @@ export default async function Home({ searchParams }: any) {
   const formatarMoeda = (valor: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
 
   const renderTagDono = (resp: string) => {
-    if (resp === 'eu') return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-pink-50 text-pink-700 border border-pink-100 shrink-0">Esposa</span>;
-    if (resp === 'marido') return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100 shrink-0">Marido</span>;
-    if (resp === 'ambos') return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-100 shrink-0">Dividido</span>;
-    if (resp === 'casa') return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100 shrink-0">Casa</span>;
+    if (resp === 'eu') return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-pink-50 text-pink-700 shrink-0">Esposa</span>;
+    if (resp === 'marido') return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 shrink-0">Marido</span>;
+    if (resp === 'ambos') return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 shrink-0">Dividido</span>;
+    if (resp === 'casa') return <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 shrink-0">Casa</span>;
+  }
+
+  // --- NOVA ETIQUETA DOS BANCOS ---
+  const renderTagBanco = (banco: string) => {
+    if (!banco || banco === 'Nenhum') return null;
+    let cor = 'bg-zinc-100 text-zinc-600';
+    if (banco === 'Nubank') cor = 'bg-purple-100 text-purple-700 border border-purple-200';
+    if (banco === 'Inter') cor = 'bg-orange-100 text-orange-700 border border-orange-200';
+    if (banco === 'Mercado Pago') cor = 'bg-blue-100 text-blue-700 border border-blue-200';
+    return <span className={`ml-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${cor}`}>💳 {banco}</span>;
   }
 
   return (
     <div className="min-h-screen bg-zinc-50/50 font-sans pb-20">
       <header className="bg-zinc-950 border-b border-zinc-800 px-4 sm:px-8 py-4 flex flex-col xl:flex-row items-center justify-between shadow-sm gap-4 sticky top-0 z-40">
         <div className="flex items-center gap-3 text-white font-bold text-xl w-full xl:w-auto justify-center xl:justify-start shrink-0">
-          <div className="bg-gradient-to-tr from-indigo-600 to-indigo-400 p-2 rounded-xl shadow-lg shadow-indigo-900/50">
-            <Wallet className="w-5 h-5 text-white" />
-          </div>
+          <div className="bg-gradient-to-tr from-indigo-600 to-indigo-400 p-2 rounded-xl shadow-lg shadow-indigo-900/50"><Wallet className="w-5 h-5 text-white" /></div>
           <span className="tracking-tight text-zinc-100">Controle Financeiro</span>
         </div>
         
@@ -75,9 +83,7 @@ export default async function Home({ searchParams }: any) {
            <BarraPesquisa /> 
            <form action={puxarFixosDoMesPassado}>
              <input type="hidden" name="mesAtual" value={mesAtual} />
-             <button type="submit" className="bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 border border-amber-400/20 shrink-0" title="Copiar fixos do mês passado">
-               <Copy className="w-4 h-4" /> <span className="hidden xl:inline">Puxar Fixos</span>
-             </button>
+             <button type="submit" className="bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 border border-amber-400/20 shrink-0" title="Copiar fixos do mês passado"><Copy className="w-4 h-4" /> <span className="hidden xl:inline">Puxar Fixos</span></button>
            </form>
            <BotaoNovo />
            <FiltroMes />
@@ -96,12 +102,8 @@ export default async function Home({ searchParams }: any) {
             {modosMenu.map((menu) => {
               const isAtivo = modoAtual === menu.id;
               return (
-                <Link 
-                  key={menu.id} href={`/?modo=${menu.id}&mes=${mesAtual}`}
-                  className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shrink-0 ${isAtivo ? menu.bgAtivo : `bg-transparent text-zinc-500 hover:bg-zinc-100`}`}
-                >
-                  <menu.icone className={`w-4 h-4 ${isAtivo ? 'text-white' : menu.cor}`} />
-                  {menu.nome}
+                <Link key={menu.id} href={`/?modo=${menu.id}&mes=${mesAtual}`} className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shrink-0 ${isAtivo ? menu.bgAtivo : `bg-transparent text-zinc-500 hover:bg-zinc-100`}`}>
+                  <menu.icone className={`w-4 h-4 ${isAtivo ? 'text-white' : menu.cor}`} /> {menu.nome}
                 </Link>
               )
             })}
@@ -138,7 +140,6 @@ export default async function Home({ searchParams }: any) {
               <p className="text-3xl font-black text-zinc-900 ml-12">{formatarMoeda(totalDespesas)}</p>
             </div>
 
-            {/* --- NOVO: BLOCO COM O GRÁFICO DE ROSCA EM LADO A LADO --- */}
             {Object.keys(gastosPorCategoria).length > 0 && (
               <div className="sm:col-span-2 bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center gap-6">
                  <div className="w-full md:w-1/2">
@@ -146,17 +147,12 @@ export default async function Home({ searchParams }: any) {
                    <div className="flex flex-col gap-3 max-h-[200px] overflow-y-auto scrollbar-hide pr-2">
                       {Object.entries(gastosPorCategoria).sort((a, b) => b[1] - a[1]).map(([cat, val]) => (
                         <div key={cat} className="flex justify-between items-center bg-zinc-50 border border-zinc-100 p-3 rounded-2xl">
-                          <p className="text-sm text-zinc-600 font-bold">{cat}</p>
-                          <p className="font-black text-red-500">{formatarMoeda(val)}</p>
+                          <p className="text-sm text-zinc-600 font-bold">{cat}</p><p className="font-black text-red-500">{formatarMoeda(val)}</p>
                         </div>
                       ))}
                    </div>
                  </div>
-                 
-                 <div className="w-full md:w-1/2 flex justify-center items-center h-full">
-                   {/* RENDERIZANDO O GRÁFICO AQUI */}
-                   <GraficoCategorias dados={gastosPorCategoria} />
-                 </div>
+                 <div className="w-full md:w-1/2 flex justify-center items-center h-full"><GraficoCategorias dados={gastosPorCategoria} /></div>
               </div>
             )}
           </div>
@@ -164,34 +160,23 @@ export default async function Home({ searchParams }: any) {
 
         <div>
           <div className="flex items-center justify-between mb-4 mt-4">
-            <h3 className="text-xl font-black text-zinc-900 flex items-center gap-2">
-              <Target className="w-6 h-6 text-indigo-600" /> Caixinhas & Metas
-            </h3>
+            <h3 className="text-xl font-black text-zinc-900 flex items-center gap-2"><Target className="w-6 h-6 text-indigo-600" /> Caixinhas & Metas</h3>
             <BotaoNovaMeta />
           </div>
           
           {minhasMetas.length === 0 ? (
-            <div className="bg-indigo-50/50 border border-indigo-100 rounded-3xl p-8 text-center">
-              <p className="text-indigo-600/70 text-sm font-semibold">Nenhuma caixinha criada. Guarde para o seu futuro!</p>
-            </div>
+            <div className="bg-indigo-50/50 border border-indigo-100 rounded-3xl p-8 text-center"><p className="text-indigo-600/70 text-sm font-semibold">Nenhuma caixinha criada. Guarde para o seu futuro!</p></div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {minhasMetas.map(meta => {
                  const progresso = Math.min(Math.round((meta.currentAmount / meta.targetAmount) * 100), 100);
                  return (
                    <div key={meta.id} className="bg-white border border-zinc-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow relative">
-                     <div className="flex justify-between items-start mb-4">
-                        <h4 className="font-bold text-zinc-900 text-lg">{meta.title}</h4>
-                        <form action={deletarMeta}><input type="hidden" name="id" value={meta.id}/><button type="submit" className="text-zinc-300 hover:text-red-500 transition-colors p-1"><Trash2 className="w-4 h-4"/></button></form>
-                     </div>
+                     <div className="flex justify-between items-start mb-4"><h4 className="font-bold text-zinc-900 text-lg">{meta.title}</h4><form action={deletarMeta}><input type="hidden" name="id" value={meta.id}/><button type="submit" className="text-zinc-300 hover:text-red-500 transition-colors p-1"><Trash2 className="w-4 h-4"/></button></form></div>
                      <p className="text-3xl font-black text-indigo-600">{formatarMoeda(meta.currentAmount)}</p>
                      <p className="text-xs text-zinc-400 font-bold mt-1">Meta: {formatarMoeda(meta.targetAmount)}</p>
-                     <div className="w-full bg-zinc-100 rounded-full h-2.5 mt-5 mb-2 overflow-hidden border border-zinc-200/50">
-                       <div className="h-full rounded-full bg-indigo-500 transition-all duration-1000 ease-out" style={{width: `${progresso}%`}}></div>
-                     </div>
-                     <div className="flex justify-between text-[10px] text-zinc-400 font-bold uppercase tracking-wider mb-4">
-                       <span>{progresso}%</span><span>Faltam {formatarMoeda(meta.targetAmount - meta.currentAmount)}</span>
-                     </div>
+                     <div className="w-full bg-zinc-100 rounded-full h-2.5 mt-5 mb-2 overflow-hidden border border-zinc-200/50"><div className="h-full rounded-full bg-indigo-500 transition-all duration-1000 ease-out" style={{width: `${progresso}%`}}></div></div>
+                     <div className="flex justify-between text-[10px] text-zinc-400 font-bold uppercase tracking-wider mb-4"><span>{progresso}%</span><span>Faltam {formatarMoeda(meta.targetAmount - meta.currentAmount)}</span></div>
                      <BotaoGuardarDinheiro meta={meta} />
                    </div>
                  )
@@ -256,7 +241,7 @@ export default async function Home({ searchParams }: any) {
                       listaDespesas.map((item) => (
                         <tr key={item.id} className="hover:bg-zinc-50/80 transition-colors group">
                           <td className="px-6 py-4">
-                            <div className="font-bold text-zinc-900 mb-1">{item.title} {item.isFixed && <span className="ml-2 text-[9px] bg-zinc-200 text-zinc-600 px-2 py-0.5 rounded-full uppercase">Fixo</span>}</div>
+                            <div className="font-bold text-zinc-900 mb-1">{item.title} {item.isFixed && <span className="ml-2 text-[9px] bg-zinc-200 text-zinc-600 px-2 py-0.5 rounded-full uppercase">Fixo</span>} {renderTagBanco(item.banco)}</div>
                             <div className="flex items-center gap-2 text-xs text-zinc-500"><CalendarDays className="w-3 h-3" /> Dia {item.dueDateDay || "--"} • {renderTagDono(item.responsavel || "eu")}</div>
                           </td>
                           <td className="px-6 py-4 font-black text-red-500 whitespace-nowrap">- {formatarMoeda(item.amount)}</td>

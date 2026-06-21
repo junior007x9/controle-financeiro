@@ -25,9 +25,10 @@ export const transactions = sqliteTable("transactions", {
   categoryId: integer("category_id").references(() => categories.id),
   responsavel: text("responsavel").default("eu"), 
   categoria: text("categoria").default("Outros"), 
+  // NOVA COLUNA: Qual foi o cartão/banco
+  banco: text("banco").default("Nenhum"),
 });
 
-// NOVA TABELA: Caixinhas / Metas
 export const goals = sqliteTable("goals", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),

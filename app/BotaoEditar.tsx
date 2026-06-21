@@ -26,92 +26,98 @@ export default function BotaoEditar({ item }: { item: any }) {
     });
   };
 
-  const valorInicial = Number(item.amount).toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+  const valorInicial = Number(item.amount).toLocaleString("pt-BR", { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
   });
 
   return (
     <>
-      <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-1 text-zinc-500 hover:text-blue-600 px-2 py-1.5 rounded-md hover:bg-blue-50 transition-colors border border-zinc-200 sm:border-none sm:bg-transparent bg-white shadow-sm sm:shadow-none" title="Editar lançamento">
+      <button onClick={() => setIsModalOpen(true)} className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors" title="Editar">
         <Edit2 className="w-4 h-4" />
-        <span className="text-[11px] font-bold uppercase sm:hidden">Editar</span>
       </button>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 text-left">
-          <div className="bg-zinc-50 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-zinc-200 flex items-center justify-between bg-white">
-              <h2 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
-                <Edit2 className="w-5 h-5 text-indigo-600" /> Editar Lançamento
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 p-2 rounded-full transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+          <div className="bg-zinc-50 rounded-3xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="p-5 border-b border-zinc-200 flex items-center justify-between bg-white sticky top-0 z-10">
+              <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2">Editar Lançamento</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 bg-zinc-100 p-1.5 rounded-full"><X className="w-5 h-5" /></button>
             </div>
             
-            <form action={handleAction} className="p-6 space-y-5 bg-zinc-50">
+            <form action={handleAction} className="p-5 space-y-4">
               <input type="hidden" name="id" value={item.id} />
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">O que é isso?</label>
-                  <select name="type" value={tipoForm} onChange={(e) => setTipoForm(e.target.value)} className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-zinc-900 shadow-sm font-medium">
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Tipo</label>
+                  <select name="type" value={tipoForm} onChange={(e) => setTipoForm(e.target.value)} className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none bg-white text-sm">
                     <option value="income">Entrada (+)</option>
                     <option value="expense">Despesa (-)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">De quem é?</label>
-                  <select name="responsavel" defaultValue={item.responsavel} className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-zinc-900 shadow-sm">
-                    <option value="eu">Esposa (Meu)</option>
-                    <option value="marido">Marido</option>
-                    <option value="ambos">Nós Dois (Dividido)</option>
-                    <option value="casa">Despesas da Casa</option>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Responsável</label>
+                  <select name="responsavel" defaultValue={item.responsavel} className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none bg-white text-sm">
+                    <option value="eu">Esposa</option><option value="marido">Marido</option><option value="ambos">Dividido</option><option value="casa">Casa</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-zinc-700 mb-1.5">
-                  {tipoForm === 'income' ? 'Título / Origem' : 'Qual é a despesa?'}
-                </label>
-                <input type="text" name="title" defaultValue={item.title} required className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm bg-white text-zinc-900" />
+                <label className="block text-xs font-bold text-zinc-700 mb-1">Título</label>
+                <input type="text" name="title" defaultValue={item.title} required className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none text-sm" />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">Valor (R$)</label>
-                  <input type="text" name="amount" defaultValue={valorInicial} onChange={handleCurrencyChange} required className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm bg-white text-zinc-900 font-medium" />
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Valor (R$)</label>
+                  <input type="text" name="amount" defaultValue={valorInicial} onChange={handleCurrencyChange} required className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none text-sm font-bold text-indigo-600" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-zinc-700 mb-1.5">Dia (Vencimento)</label>
-                  <input type="number" name="dueDateDay" defaultValue={item.dueDateDay || ""} min="1" max="31" className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm bg-white text-zinc-900" />
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Dia Vencimento</label>
+                  <input type="number" name="dueDateDay" defaultValue={item.dueDateDay || ""} min="1" max="31" className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none text-sm" />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-zinc-700 mb-1.5">
-                  {tipoForm === 'income' ? 'Frequência da Entrada' : 'Tipo de Despesa'}
-                </label>
-                <select name="isFixed" defaultValue={item.isFixed ? "true" : "false"} className="w-full border border-zinc-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-zinc-900 shadow-sm">
-                  {tipoForm === 'income' ? (
-                    <>
-                      <option value="true">Renda Fixa Mensal</option>
-                      <option value="false">Serviço Por Fora / Avulso</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="true">Despesa Fixa (Todo mês)</option>
-                      <option value="false">Gasto Variável / Avulso</option>
-                    </>
-                  )}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Categoria</label>
+                  <select name="categoria" defaultValue={item.categoria || "Outros"} className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none bg-white shadow-sm text-sm">
+                    <option value="Moradia">🏠 Moradia</option>
+                    <option value="Alimentação">🍔 Alimentação</option>
+                    <option value="Transporte">🚗 Transporte</option>
+                    <option value="Lazer">🍿 Lazer</option>
+                    <option value="Saúde">💊 Saúde</option>
+                    <option value="Educação">📚 Educação</option>
+                    <option value="Serviços">💼 Serviços/Renda</option>
+                    <option value="Outros">📦 Outros</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 mb-1">Recorrência</label>
+                  <select name="isFixed" defaultValue={item.isFixed ? "true" : "false"} className="w-full border border-zinc-300 rounded-lg px-3 py-2 outline-none bg-white shadow-sm text-sm">
+                    <option value="false">Compra Avulsa</option>
+                    <option value="true">Conta Fixa (Todo mês)</option>
+                  </select>
+                </div>
               </div>
 
-              <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-colors mt-4 shadow-md hover:shadow-lg">
-                Atualizar Lançamento
-              </button>
+              {tipoForm === 'expense' && (
+                <div className="bg-indigo-50/50 border border-indigo-100 p-3 rounded-xl space-y-3 mt-2">
+                  <div>
+                    <label className="block text-xs font-bold text-indigo-900 mb-1">Cartão Usado</label>
+                    <select name="banco" defaultValue={item.banco || "Nenhum"} className="w-full border border-indigo-200 rounded-lg px-3 py-2 outline-none bg-white text-sm font-medium text-indigo-800">
+                      <option value="Nenhum">Não (Pix / Boleto)</option>
+                      <option value="Nubank">🟪 Cartão Nubank</option>
+                      <option value="Inter">🟧 Cartão Inter</option>
+                      <option value="Mercado Pago">🟦 Cartão Mercado Pago</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-md mt-4">Atualizar Lançamento</button>
             </form>
           </div>
         </div>
